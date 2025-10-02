@@ -63,22 +63,25 @@ Bastin_Zonal_Statistics <- read_csv(here("data/input/Bastin_Zonal_Statistics.csv
   group_by(iso3) %>%
   summarise(
     country_area = sum(area, na.rm = TRUE),
-    Tree_cover = sum(`mean` * area, na.rm = TRUE) / sum(area, na.rm = TRUE)
+    Tree_cover = sum(`mean` * area, na.rm = TRUE) / sum(area, na.rm = TRUE),
+    Tree_cover_ha = sum(`mean` * area, na.rm = TRUE) / 100
   ) %>%
   pivot_longer(
-    cols = c(Tree_cover, country_area),
+    cols = c(Tree_cover, Tree_cover_ha, country_area),
     names_to = "Variable",
     values_to = "Value"
   ) %>%
   mutate(
     unit = case_when(
       Variable == "Tree_cover" ~ "%",
+      Variable == "Tree_cover_ha" ~ "ha",
       Variable == "country_area" ~ "ha"
     ),
     source = "Bastinetal_2019",
     description = case_when(
-      Variable == "Tree_cover" ~ "Global tree cover (existing and potential)",
-      Variable == "country_area" ~ "Area of the country"
+      Variable == "Tree_cover" ~ "Global tree cover (existing and potential, % of land)",
+      Variable == "Tree_cover_ha" ~ "Global tree cover (existing and potential, hectares)",
+      Variable == "country_area" ~ "Area of the country (hectares)"
     )
   ) %>%
   select(iso3, Variable, Value, unit, description, source)
@@ -278,79 +281,12 @@ restoration_db <- Aboveground_and_Belowground_Biomass_Carbon_Density_Zonal_Stati
 
 
 
-### FIGURES AND ANALYSIS ###
-
-# Tree cover
-treecover_top6 <- restoration_db %>%
-  filter(Variable == "Tree_cover") %>%
-  arrange(desc(Value)) %>%
-  slice_head(n = 6)
-
-# Plot
-treecover_plot <- ggplot(treecover_top6, aes(x = reorder(iso3, Value), y = Value, fill = iso3)) +
-  geom_col(show.legend = FALSE) +
-  theme_minimal() +
-  labs(
-    x = "Country",
-    y = "Tree cover (%)",
-    title = "Top 6 Countries with Highest Tree Cover"
-  )
-
-
-
-
-# Biomass_Carbon
-
-biomass_top6 <- restoration_db %>%
-  filter(Variable == "Biomass_Carbon") %>%
-  arrange(desc(Value)) %>%
-  slice_head(n = 6)
-
-# Plot
-biomass_plot <- ggplot(biomass_top6, aes(x = reorder(iso3, Value), y = Value, fill = iso3)) +
-  geom_col(show.legend = FALSE) +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Biomass Carbon (Mg)",
-    title = "Top 6 Countries with Highest Biomass Carbon"
-  )
-
-
-restoration_wide <- restoration_db %>%
-  filter(Variable %in% c("Biomass_Carbon_Density", "country_area")) %>%
-  select(iso3, Variable, Value) %>%  # drop source/unit to avoid duplicates
-  pivot_wider(names_from = Variable, values_from = Value)
-
-mean_density <- restoration_wide %>%
-  summarise(weighted_mean = weighted.mean(Biomass_Carbon_Density, country_area, na.rm = TRUE)) %>%
-  pull(weighted_mean)
-
-biomass_density_top6 <- restoration_wide %>%
-  arrange(desc(Biomass_Carbon_Density)) %>%
-  slice_head(n = 6)
-
-biomass_density_plot <- ggplot(biomass_density_top6, 
-                               aes(x = reorder(iso3, Biomass_Carbon_Density), 
-                                   y = Biomass_Carbon_Density, fill = iso3)) +
-  geom_col(show.legend = FALSE) +
-  geom_hline(yintercept = mean_density, linetype = "dashed", color = "red") +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Biomass Carbon Density (Mg/ha)",
-    title = "Top 6 Countries with Highest Biomass Carbon Density",
-    subtitle = paste0("Global weighted mean = ", round(mean_density, 2), " Mg/ha")
-  )
-
-
-
 
 
 
 ### IDEA OF ANALYSIS ###
-  
-# Aboveground and Belowground Biomass Carbon Density
+
+### Databases we have:  
 # Global tree cover (existing and potential)
 # Indian restoration areas
 # Carbon sequestration potential from reforestation in CO2e
@@ -360,80 +296,131 @@ biomass_density_plot <- ggplot(biomass_density_top6,
 
 
 
-# Aboveground and Belowground Biomass Carbon Density => Biomass_Carbon
-# Constrained unrealized potential aboveground biomass, belowground biomass, and soil organic carbon combined density under baseline climate => Potential_carbonland_total
 
 
-
-biomass_db <- restoration_db %>% 
-  filter(Variable %in% c("Biomass_Carbon", "Potential_carbonland_total")) %>%
-  filter(iso3 %in% c("BRA", "RUS", "USA", "CAN", "COD", "IDN", "CHN", "AUS")) %>% 
-  select(iso3, Variable, Value) %>% 
-  pivot_wider(names_from = Variable, values_from = Value) %>% 
-
-  select(iso3, Biomass_Carbon, Potential_carbonland_total) %>% 
-  pivot_longer(
-    cols = c(Biomass_Carbon, Potential_carbonland_total),
-    names_to = "Type",
-    values_to = "Value"
-  )
+### 1) Compare "Potential for forest regeneration in tropical regions" vs  Global tree cover (existing and potential)
 
 
+# Potential forests reg in tropical regions
+treecover_top6 <- restoration_db %>%
+  filter(Variable == "Potential_forestregeneration_total") %>%
+  arrange(desc(Value)) %>%
+  slice_head(n = 6)
 
 
-biomassdensity_db <- restoration_db %>% 
-  filter(Variable %in% c("Biomass_Carbon_Density", "Potential_carbonland_density")) %>%
-  filter(iso3 %in% c("BRA", "RUS", "USA", "CAN", "COD", "IDN", "CHN", "AUS")) %>% 
+forestcover_db <- restoration_db %>% 
+  filter(Variable %in% c("Tree_cover_ha", "Potential_forestregeneration_total")) %>%
+  filter(iso3 %in% c("BRA", "IDN", "COL", "MEX", "COD", "CHN")) %>% 
   select(iso3, Variable, Value) %>% 
   pivot_wider(names_from = Variable, values_from = Value) %>% 
   
-  select(iso3, Biomass_Carbon_Density, Potential_carbonland_density) %>% 
+  select(iso3, Tree_cover_ha, Potential_forestregeneration_total) %>% 
   pivot_longer(
-    cols = c(Biomass_Carbon_Density, Potential_carbonland_density),
+    cols = c(Tree_cover_ha, Potential_forestregeneration_total),
     names_to = "Type",
     values_to = "Value"
   )
 
 
-biomass_plot <- ggplot(biomass_db, aes(x = iso3, y = Value, fill = Type)) +
+labels_map <- c(
+  "IDN" = "Indonesia",
+  "COD" = "DR Congo",
+  "CHN" = "China",
+  "USA" = "United States",
+  "MEX" = "Mexico",
+  "BRA" = "Brazil",
+  "COL" = "Colombia"
+)
+
+labels_map_type <- c(
+  "Tree_cover_ha" = "Current Tree Cover (Mha)",
+  "Potential_forestregeneration_total" = "Potential Forest Regeneration (Mha)"
+)
+
+forestcover_plot <- ggplot(forestcover_db, aes(x = iso3, y = Value / 1e6, fill = Type)) +
   geom_col(position = "dodge") +
   scale_y_continuous(labels = scales::comma) +
   labs(
-    x = "Country",
-    y = "Carbon Stock (Mg C)",
-    fill = "Type",
-    title = "Current vs Potential Carbon Stock by Country"
+    x = "",
+    y = "Forest cover & Potential (Mha)",
+    fill = "",
+    title = "Current Tree Cover vs Potential Forest Regeneration"
   ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-biomassdensity_plot <- ggplot(biomassdensity_db, aes(x = iso3, y = Value, fill = Type)) +
-  geom_col(position = "dodge") +
-  scale_y_continuous(labels = scales::comma) +
-  labs(
-    x = "Country",
-    y = "Carbon Stock by hectare  (Mg C/ha) ",
-    fill = "Type",
-    title = "Current vs Potential Carbon Stock by Country"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-# PROBLEM! Biomass carbon (without SOC) is higher than Potential biomass carbon (with SOC)
-
-
-# Carbon sequestration potential from reforestation in CO2e
-# Potential for forest regeneration in tropical regions
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = labels_map) +
+  scale_fill_manual(values = c("Tree_cover_ha" = "#1f77b4", 
+                               "Potential_forestregeneration_total" = "#ff7f0e"),
+                    labels = labels_map_type)
 
 
 
-forests_db <- restoration_db %>% 
+
+### 2) Compare "Potential for forest regeneration in tropical regions" vs  Total carbon sequestration potential from reforestation
+
+
+potentialforest_ratio_db <- restoration_db %>% 
   filter(Variable %in% c("Reforestation_carbonseq_total", "Potential_forestregeneration_total")) %>%
+  filter(iso3 %in% c("BRA", "IDN", "COL", "MEX", "COD", "CHN")) %>% 
+  select(iso3, Variable, Value) %>% 
+  pivot_wider(names_from = Variable, values_from = Value) %>%
+  mutate(Reforestation_ratio = Reforestation_carbonseq_total / Potential_forestregeneration_total)
 
-  
-# Different units => need to check if a correlation can be done
+# Labels for countries
+labels_map <- c(
+  "IDN" = "Indonesia",
+  "COD" = "DR Congo",
+  "CHN" = "China",
+  "USA" = "United States",
+  "MEX" = "Mexico",
+  "BRA" = "Brazil",
+  "COL" = "Colombia"
+)
+
+# Plot ratio
+potentialforest_ratio_plot <- ggplot(potentialforest_ratio_db, aes(x = iso3, y = Reforestation_ratio)) +
+  geom_col(fill = "#1f77b4") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    x = "",
+    y = "Reforestation potential per hectare (Mt CO₂e / Mha)",
+    title = "Carbon sequestration potential per hectare of potential forest regeneration"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = labels_map)
+
+
+
+
+### 3) Compare "Indian restoration areas" and "Potential for forest regeneration in tropical regions"
+
+
+Indiaforest_db <- restoration_db %>% 
+  filter(Variable %in% c("Excluded_areas", "Protection", "Wide_scale_Restoration", "Mosaic_Restoration", "Tree_cover_ha", "Potential_forestregeneration_total")) %>%
+  filter(iso3 %in% c("IND")) %>% 
+  select(iso3, Variable, Value) 
+
+Indiaforest_stacked <- Indiaforest_db %>%
+  mutate(Group = case_when(
+    Variable %in% c("Excluded_areas", "Protection", "Wide_scale_Restoration", "Mosaic_Restoration") ~ "Restoration_types",
+    Variable == "Tree_cover_ha" ~ "Tree_cover",
+    Variable == "Potential_forestregeneration_total" ~ "Potential_forest_regeneration"
+  )) %>%
+  mutate(Value = Value / 1e6) %>%
+  arrange(Group)
+
+# Now plot
+ggplot(Indiaforest_stacked, aes(x = Group, y = Value, fill = Variable)) +
+  geom_col(position = "stack") + 
+  labs(
+    x = "",
+    y = "Area (Mha)",
+    fill = "",
+    title = "India: Current Tree Cover (actual and potential), Potential Forest Regeneration, and Restoration Types"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
 
@@ -441,3 +428,55 @@ forests_db <- restoration_db %>%
 
 
 
+
+
+# ### 1) Compare "Aboveground and Belowground Biomass Carbon Density" and "Constrained unrealized potential aboveground biomass, belowground biomass, and soil organic carbon combined density under baseline climate"
+# # Aboveground and Belowground Biomass Carbon Density => Biomass_Carbon
+# # Constrained unrealized potential aboveground biomass, belowground biomass, and soil organic carbon combined density under baseline climate => Potential_carbonland_total
+# # Current Carbon Stock (above and below biomass)" vs Unrealized Potential Carbon Stock (above and below biomass + SOC)
+# 
+# 
+# biomass_db <- restoration_db %>% 
+#   filter(Variable %in% c("Biomass_Carbon", "Potential_carbonland_total")) %>%
+#   filter(iso3 %in% c("BRA", "RUS", "USA", "CAN", "COD", "IDN", "CHN")) %>% 
+#   select(iso3, Variable, Value) %>% 
+#   pivot_wider(names_from = Variable, values_from = Value) %>% 
+# 
+#   select(iso3, Biomass_Carbon, Potential_carbonland_total) %>% 
+#   pivot_longer(
+#     cols = c(Biomass_Carbon, Potential_carbonland_total),
+#     names_to = "Type",
+#     values_to = "Value"
+#   )
+# 
+# labels_map <- c(
+#   "IDN" = "Indonesia",
+#   "COD" = "DR Congo",
+#   "CHN" = "China",
+#   "USA" = "United States",
+#   "RUS" = "Russia",
+#   "BRA" = "Brazil",
+#   "CAN" = "Canada"
+# )
+# 
+# labels_map_type <- c(
+#   "Biomass_Carbon" = "Current Carbon Stock (above and below biomass)",
+#   "Potential_carbonland_total" = "Unrealized Potential Carbon Stock (above and below biomass + SOC)"
+# )
+# 
+# biomass_plot <- ggplot(biomass_db, aes(x = iso3, y = Value / 1e9, fill = Type)) +
+#   geom_col(position = "dodge") +
+#   scale_y_continuous(labels = scales::comma) +
+#   labs(
+#     x = "",
+#     y = "Carbon Stock (Pg C)",
+#     fill = "",
+#     title = "Current vs Unrealized Potential Carbon Stock by Country"
+#   ) +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   scale_x_discrete(labels = labels_map) +
+#   scale_fill_manual(values = c("Biomass_Carbon" = "#1f77b4", 
+#                                "Potential_carbonland_total" = "#ff7f0e"),
+#                     labels = labels_map_type)
+# 
