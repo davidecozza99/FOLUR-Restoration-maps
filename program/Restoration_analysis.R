@@ -1,6 +1,11 @@
 
 ### IDEA OF ANALYSIS ###
 
+
+restoration_db <- read_excel(here("data/output/restoration_db.xlsx"))
+
+
+
 ### Databases we have:  
 # 1 Global tree cover (existing and potential) (% and ha)
 # 2 Indian restoration areas (ha)
