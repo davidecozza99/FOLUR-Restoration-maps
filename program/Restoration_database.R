@@ -454,15 +454,15 @@ restoration_db_final <- restoration_db %>%
       TRUE ~ "Any"
     ),
     Areas_for_restoration = case_when(
-      source == "Chaturvedietal_2018" ~ "Exclude Grassland, Areas under surface and groundwater irrigation, Croplands with more than 40 percent tree canopy cover, National parks, Sanctuaries, State reserves, Wildlife reserves, Urban and Built-up areas",
+      source == "Chaturvedietal_2018" ~ "Exclude grassland, areas under surface and groundwater irrigation, croplands with more than 40 percent tree canopy cover, national parks, sanctuaries, State reserves, wildlife reserves, and urban and built-up areas",
       source == "Bastinetal_2019" ~ "Exclude cropland and urban areas",
-      source == "Hasleretal_2024" ~ "Include Evergreen, needleleaf forests, evergreen broadleaf forests, deciduous needleleaf, forests, deciduous broadleaf forests, mixed forests, and woody savanna",
-      source == "ORNL_DAAC" ~ "Woody, Grassland, Cropland, and Tundra biomass",
+      source == "Hasleretal_2024" ~ "Include evergreen, needleleaf forests, evergreen broadleaf forests, deciduous needleleaf, forests, deciduous broadleaf forests, mixed forests, and woody savanna",
+      source == "ORNL_DAAC" ~ "Woody, grassland, cropland, and tundra biomass",
       source == "Shyamsundaretal_2022" ~"Tropical croplands, pasturelands, and degraded forestlands",
-      source == "Potapovetal_2011" ~ "Exclude Naturally nonforested lands, Forest without restoration needs, Urban areas and Remote restoration",
-      source == "Austinetal_2020 in Roeetal_2021" ~ "Na",
+      source == "Potapovetal_2011" ~ "Exclude naturally nonforested lands, forest without restoration needs, urban areas and remote restoration",
+      # source == "Austinetal_2020 in Roeetal_2021" ~ "Na",
       source == "Busch_2019 in Roeetal_2021" ~ "Tropical forested countries and biomes",
-      source == "Williamsal_2024" ~ "Focus on afforestation/reforestation. Exclude Mangrove and Peatland restoration",
+      source == "Williamsal_2024" ~ "Focus on afforestation/reforestation. Exclude mangrove and peatland restoration",
       TRUE ~ "All"
     ),
     Include_existing_trees = case_when(
