@@ -460,6 +460,8 @@ restoration_db_final <- restoration_db %>%
       source == "ORNL_DAAC" ~ "Woody, grassland, cropland, and tundra biomass",
       source == "Shyamsundaretal_2022" ~"Tropical croplands, pasturelands, and degraded forestlands",
       source == "Potapovetal_2011" ~ "Exclude naturally nonforested lands, forest without restoration needs, urban areas and remote restoration",
+      source == "Griscometal_2017" ~ "Exclude existing cropland area",
+      source == "Williamsal_2024" ~ "Exclude existing cropland, grazing and urban areas",
       # source == "Austinetal_2020 in Roeetal_2021" ~ "Na",
       source == "Busch_2019 in Roeetal_2021" ~ "Tropical forested countries and biomes",
       source == "Williamsal_2024" ~ "Focus on afforestation/reforestation. Exclude mangrove and peatland restoration",
@@ -487,6 +489,15 @@ restoration_db_final <- restoration_db %>%
     Composite_variable = ifelse(
       source %in% c("Chaturvedietal_2018", "Potapovetal_2011"), "Y", "N"
     ),
+    # Climate_scenario = case_when(
+    #   source %in% c("ORNL_DAAC", "Chaturvedietal_2018" ) ~ "Y",
+    #   source %in% c("Griscometal_2017", "Hasleretal_2024", "Walkeral_2022",
+    #                 "Williamsal_2024","Potapovetal_2011",
+    #                 "Austinetal_2020 in Roeetal_2021",
+    #                 "Bastinetal_2019",
+    #                 "Shyamsundaretal_2022", "Busch_2019 in Roeetal_2021") ~ "N",
+    #   TRUE ~ NA_character_
+    # ),
     Resolution = case_when(
       source %in% c("Bastinetal_2019") ~ "1 km", #30 arc sec
       source %in% c("Griscometal_2017") ~ "1 Km", #0.0083°
