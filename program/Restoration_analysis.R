@@ -34,7 +34,8 @@ restoration_db <- read_excel(here("data/output/restoration_db.xlsx"))
 Worldforest_db <- restoration_db %>% 
   filter(Variable %in% c("Wide scale", "Mosaic", "Tree_cover_potential",
                          "ars_tech_ha_tot", "ars_feas_ha_tot",
-                         "Potential_forestregeneration_total", "Restoration_Potential")) %>%
+                         "Potential_forestregeneration_total", "Restoration_Potential",
+                         "MaxRefPotential")) %>%
   group_by(Variable) %>% 
   mutate(Value  = sum(Value)) %>% 
   select(-iso3) %>% 
@@ -58,6 +59,7 @@ Worldforest_stacked <- Worldforest_db %>%
       Variable %in% c("ars_tech_ha_tot", "ars_feas_ha_tot") ~ "Roeetal",
       Variable %in% c("Potential_forestregeneration_total") ~ "Williametal",
       Variable %in% c("Restoration_Potential") ~ "Shyamsundaretal_2022",
+      Variable == "MaxRefPotential" ~ "fesenmyeretal",
       TRUE ~ NA_character_
     ),
     Group_label = case_when(
@@ -66,6 +68,7 @@ Worldforest_stacked <- Worldforest_db %>%
       Group == "Roeetal" ~ "Roe et al. (2021)",
       Group == "Williametal" ~ "Williams et al. (2024)",
       Group == "Shyamsundaretal_2022" ~ "Shyamsundar et al. (2022)",
+      Group == "fesenmyeretal" ~ "Fesenmyer et al. (2025)",
       TRUE ~ Group
     ),
     Variable_label = case_when(
@@ -76,6 +79,7 @@ Worldforest_stacked <- Worldforest_db %>%
       Variable == "ars_tech_ha_tot" ~ "Technical restoration potential (2015-2050)",
       Variable == "ars_feas_ha_tot" ~ "Cost-effective restoration potential (2015-2050)",
       Variable ==  "Restoration_Potential" ~ "Tree cover restoration potential",
+      Variable ==  "MaxRefPotential" ~ "Tree cover restoration potential",
       Variable ==  "Potential_forestregeneration_total" ~ "Tree cover restoration potential"
     )
   ) %>% 
@@ -108,7 +112,9 @@ label_source <- c(
   "ars_tech_ha_tot" = "Roe et al. (2021)",
   "ars_feas_ha_tot" = "Roe et al. (2021)",
   "Restoration_Potential" = "Williams et al. (2024)",
-  "Potential_forestregeneration_total" = "Shyamsundar et al. (2022)"
+  "Potential_forestregeneration_total" = "Shyamsundar et al. (2022)",
+  "MaxRefPotential" = "Fesenmyer et al. (2025)"
+  
 )
 
 World_plot <- ggplot(Worldforest_stacked, aes(x = Axis_group, y = Value, fill = Variable_label)) +
@@ -134,7 +140,7 @@ World_plot <- ggplot(Worldforest_stacked, aes(x = Axis_group, y = Value, fill = 
     text = element_text(family = "sans", color = "black", size = 30, face = "bold"),
     legend.title = element_text(size = 24),
     axis.title.y = element_text(size = 24),
-    axis.text.x = element_text(size = 20),
+    axis.text.x = element_text(size = 19),
     legend.position = "top",
     legend.box = "horizontal"
   ) 
@@ -173,13 +179,27 @@ Indiaforest_db <- restoration_db %>%
 
 
 
+fesenmyer_india <- read_csv(here("data/input/fesenmyer_india.csv")) %>% 
+  mutate(iso3 = "IND", unit = "ha") %>% 
+  rename(Value = d0) %>% 
+  mutate(Variable = "MaxRefPotential") %>% 
+  select(iso3, Variable, Value) %>% 
+  group_by(iso3) %>% 
+  mutate(Value = sum(Value)) %>% 
+  distinct()
+
+
+
+
 Indiaforest_stacked <- Indiaforest_db %>%
+  rbind(fesenmyer_india) %>% 
   mutate(Group = case_when(
     Variable %in% c("Excluded_areas", "Protection", "Wide_scale_Restoration", "Mosaic_Restoration") ~ "Chaturvedietal_2018",
     Variable %in% c("Mosaic", "Wide scale") ~ "Potapovetal",
     Variable == "Tree_cover_potential" ~ "Bastinetal_2019",
     Variable == "Potential_forestregeneration_total" ~ "Williamsal_2024",
     Variable == "Restoration_Potential" ~ "Shyamsundaretal_2022",
+    Variable == "MaxRefPotential" ~ "Fesenmyer",
     Variable %in% c("ars_tech_ha_tot", "ars_feas_ha_tot") ~ "Roeetal",
     TRUE ~ NA_character_
   )) %>%
@@ -193,6 +213,7 @@ Indiaforest_stacked <- Indiaforest_db %>%
       Group == "Williamsal_2024" ~ "Williams et al. (2024)",
       Group == "Shyamsundaretal_2022" ~ "Shyamsundar et al. (2022)",
       Group == "Roeetal" ~ "Roe et al. (2021)",
+      Group == "Fesenmyer" ~ "Fesenmyer et al. (2025)",
       TRUE ~ Group
     ),
     Variable_label = case_when(
@@ -202,6 +223,7 @@ Indiaforest_stacked <- Indiaforest_db %>%
       Variable == "Tree_cover_potential" ~ "Tree cover restoration potential",
       Variable ==  "Restoration_Potential" ~ "Tree cover restoration potential",
       Variable ==  "Potential_forestregeneration_total" ~ "Tree cover restoration potential",
+      Variable ==  "MaxRefPotential" ~ "Tree cover restoration potential",
       Variable == "ars_tech_ha_tot" ~ "Technical restoration potential (2015-2050)",
       Variable == "ars_feas_ha_tot" ~ "Cost-effective restoration potential (2015-2050)",
       TRUE ~ gsub("_", " ", Variable)
@@ -247,7 +269,7 @@ India_plot <- ggplot(Indiaforest_stacked, aes(x = Group_label, y = Value, fill =
   theme(
     text = element_text(family = "sans", color = "black", size = 30, face = "bold"),
     legend.title = element_text(size = 24),
-    axis.text.x = element_text(size = 19),
+    axis.text.x = element_text(size = 16),
     axis.title.y = element_text(size = 24),
     legend.position = "top",
     legend.box = "horizontal",
@@ -272,7 +294,6 @@ dev.off()
 
 ### 3) Brazil restoration potential
 
-
 Brazilforest_db <- restoration_db %>% 
   filter(Variable %in% c("Excluded_areas", "Protection", "Wide_scale_Restoration", "Wide scale",
                          "Mosaic_Restoration", "Mosaic", "Tree_cover_potential", "Potential_forestregeneration_total",
@@ -285,12 +306,25 @@ Brazilforest_db <- restoration_db %>%
 
 
 
+fesenmyer_brazil <- read_csv(here("data/input/fesenmyer_brazil.csv")) %>% 
+  mutate(iso3 = "BRA", unit = "ha") %>% 
+  rename(Value = d0) %>% 
+  mutate(Variable = "MaxRefPotential") %>% 
+  select(iso3, Variable, Value) %>% 
+  group_by(iso3) %>% 
+  mutate(Value = sum(Value)) %>% 
+  distinct()
+
+
+
 Brazilforest_stacked <- Brazilforest_db %>%
+  rbind(fesenmyer_brazil) %>% 
   mutate(Group = case_when(
     Variable %in% c("Mosaic", "Wide scale") ~ "Potapovetal",
     Variable == "Tree_cover_potential" ~ "Bastinetal_2019",
     Variable == "Potential_forestregeneration_total" ~ "Williamsal_2024",
     Variable == "Restoration_Potential" ~ "Shyamsundaretal_2022",
+    Variable == "MaxRefPotential" ~ "Fesenmyer",
     Variable %in% c("ars_tech_ha_tot", "ars_feas_ha_tot") ~ "Roeetal",
     TRUE ~ NA_character_
   )) %>%
@@ -303,6 +337,7 @@ Brazilforest_stacked <- Brazilforest_db %>%
       Group == "Williamsal_2024" ~ "Williams et al. (2024)",
       Group == "Shyamsundaretal_2022" ~ "Shyamsundar et al. (2022)",
       Group == "Roeetal" ~ "Roe et al. (2021)",
+      Group == "Fesenmyer" ~ "Fesenmyer et al. (2025)",
       TRUE ~ Group
     ),
     Variable_label = case_when(
@@ -312,6 +347,7 @@ Brazilforest_stacked <- Brazilforest_db %>%
       Variable == "Tree_cover_potential" ~ "Tree cover restoration potential",
       Variable ==  "Restoration_Potential" ~ "Tree cover restoration potential",
       Variable ==  "Potential_forestregeneration_total" ~ "Tree cover restoration potential",
+      Variable ==  "MaxRefPotential" ~ "Tree cover restoration potential",
       Variable == "ars_tech_ha_tot" ~ "Technical restoration potential (2015-2050)",
       Variable == "ars_feas_ha_tot" ~ "Cost-effective restoration potential (2015-2050)",
       TRUE ~ gsub("_", " ", Variable)

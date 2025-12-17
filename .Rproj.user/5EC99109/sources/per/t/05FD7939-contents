@@ -398,6 +398,8 @@ Busch_2019 <- bind_rows(Busch_2019, totals) %>%
   distinct()
 
 
+fesenmyeretal <- read_excel(here("data/input/fesenmyeretal.xlsx"))
+
 
 restoration_db <- Bastin_Zonal_Statistics %>%
   rbind(Aboveground_and_Belowground_Biomass_Carbon_Density_Zonal_Statistics) %>%
@@ -412,7 +414,9 @@ restoration_db <- Bastin_Zonal_Statistics %>%
   rbind(Shyamsundaretal) %>%
   rbind(Busch_2019) %>%
   distinct(iso3, Variable, .keep_all = TRUE) %>%
-  drop_na()
+  drop_na() %>% 
+  # Adding Fesenmeyer et al 2025 data at global level => 305 Mha
+  rbind(fesenmyeretal)
 
 write.xlsx(restoration_db,  file = here("data", "output", "restoration_db.xlsx"), row.names = FALSE)
 
@@ -514,8 +518,13 @@ restoration_db_final <- restoration_db %>%
   distinct() %>% 
   rename(variable = description) %>% 
   select(source, variable, unit, Resolution, Focus_trees, Climatic_zone, Areas_for_restoration, Include_existing_trees, Available_map_on_FABLE_Zonal_Statistics_Extractor, Composite_variable) %>% 
-  distinct()
-  
+  distinct() 
+
+
+
+restoration_db_final <- restoration_db_final %>% 
+  mutate()
+
 
 
 write.xlsx(restoration_db_final,  file = here("data", "output", "restoration_metadata.xlsx"), row.names = FALSE)
