@@ -471,8 +471,15 @@ Brazilforest_stacked <- Brazilforest_db %>%
         "Williams et al. (2024)"
       )
     )
-  )
-
+  ) %>% 
+  bind_rows(data.frame(
+    iso3 = "BRA",
+    Variable = "restoration_pasture",
+    Value = 80.87,
+    Group = "Barrios",
+    Group_label = "Barrios et al. (2023)",
+    Variable_label = "Restoration potential of moderate and severely degraded pasture"
+  ))
 
 write.xlsx(Brazilforest_stacked,  file = here("data", "output", "restoration_brazil.xlsx"), row.names = FALSE)
 
